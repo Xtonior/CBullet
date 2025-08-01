@@ -50,7 +50,7 @@ To use the wrapper in your C project:
 
 ---
 
-## 📁 Required Files
+## Required Files
 
 Make sure the following files are available in your project:
 
