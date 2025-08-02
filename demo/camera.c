@@ -10,6 +10,16 @@ vec3 camUp = {0.0f, 1.0f, 0.0f};
 float lastX = 800/2.0f, lastY = 600/2.0f;
 int firstMouse = 1;
 
+float *get_camera_front()
+{
+    return camFront;
+}
+
+float *get_camera_pos()
+{
+    return camPos;
+}
+
 void camera_update_mouse(float xpos, float ypos)
 {
     if (firstMouse) { lastX = xpos; lastY = ypos; firstMouse = 0; }

@@ -21,6 +21,7 @@
 #include "shaders.h"
 #include "drawable.h"
 #include "meshes.h"
+#include "meshgen.h"
 
 #define MAX_BODIES 128
 
@@ -28,6 +29,8 @@ GLFWwindow* win;
 
 Drawable objects[MAX_BODIES];
 Drawable ground_object;
+Drawable sphere_object;
+int num_sphere_verts;
 int objectCount = 0;
 GLuint shader;
 
@@ -54,6 +57,78 @@ int init_window()
     glewInit();
 
     return 1;
+}
+
+// https://github.com/glfw/glfw/issues/310
+void glfwSetWindowCenter(GLFWwindow* window) 
+{
+    // Get window position and size
+    int window_x, window_y;
+    glfwGetWindowPos(window, &window_x, &window_y);
+
+    int window_width, window_height;
+    glfwGetWindowSize(window, &window_width, &window_height);
+
+    // Halve the window size and use it to adjust the window position to the center of the window
+    window_width *= 0.5;
+    window_height *= 0.5;
+
+    window_x += window_width;
+    window_y += window_height;
+
+    // Get the list of monitors
+    int monitors_length;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitors_length);
+
+    if(monitors == NULL) 
+    {
+        // Got no monitors back
+        return;
+    }
+
+    // Figure out which monitor the window is in
+    GLFWmonitor *owner = NULL;
+    int owner_x, owner_y, owner_width, owner_height;
+
+    for(int i = 0; i < monitors_length; i++) 
+    {
+        // Get the monitor position
+        int monitor_x, monitor_y;
+        glfwGetMonitorPos(monitors[i], &monitor_x, &monitor_y);
+
+        // Get the monitor size from its video mode
+        int monitor_width, monitor_height;
+        GLFWvidmode *monitor_vidmode = (GLFWvidmode*) glfwGetVideoMode(monitors[i]);
+
+        if(monitor_vidmode == NULL) 
+        {
+            // Video mode is required for width and height, so skip this monitor
+            continue;
+
+        } else 
+        {
+            monitor_width = monitor_vidmode->width;
+            monitor_height = monitor_vidmode->height;
+        }
+
+        // Set the owner to this monitor if the center of the window is within its bounding box
+        if((window_x > monitor_x && window_x < (monitor_x + monitor_width)) && (window_y > monitor_y && window_y < (monitor_y + monitor_height)))
+        {
+            owner = monitors[i];
+
+            owner_x = monitor_x;
+            owner_y = monitor_y;
+
+            owner_width = monitor_width;
+            owner_height = monitor_height;
+        }
+    }
+
+    if(owner != NULL) 
+    {
+        // Set the window position to the center of the owner monitor
+        glfwSetWindowPos(window, owner_x + (owner_width * 0.5) - window_width, owner_y + (owner_height * 0.5) - window_height);
+    }
 }
 
 int init_graphics()
@@ -86,6 +161,16 @@ int init_physics()
     for (int j = 0; j < 3; ++j)
         ground_object.color[j] = (float)(rand() % 100) / 100.0f;
 
+    float *sphere_verts = mesh_gen_sphere(16, 16, 0.5f, &num_sphere_verts);
+
+    drawable_init(&sphere_object, shader, sphere_verts, num_sphere_verts * 3);
+    BulletShape* sphereShape = Bullet_CreateSphereShape(0.5f);
+    BulletBody* sphere = Bullet_CreateRigidBody(world, sphereShape, 1, 0, 10, 0);
+
+    sphere_object.body = sphere;
+    for (int j = 0; j < 3; ++j)
+        sphere_object.color[j] = (float)(rand() % 100) / 100.0f;
+
     for (int i = 0; i < 120; ++i) 
     {
         drawable_init(&objects[i], shader, mesh_cube_vertices, num_cube_vertices * 3);
@@ -99,6 +184,8 @@ int init_physics()
         
         objectCount = i;
     }
+
+    objects[objectCount++] = sphere_object;
 
     return 1;
 }
@@ -161,6 +248,57 @@ void update_ground()
     drawable_draw(&ground_object, shader, num_ground_vertices);
 }
 
+void update_sphere()
+{
+    if (glfwGetKey(win, GLFW_KEY_F) == GLFW_PRESS)
+    {
+        
+    }
+
+    float x, y, z;
+    Bullet_GetBodyPosition(sphere_object.body, &x, &y, &z);
+    
+    float rx, ry, rz, rw;
+    Bullet_GetBodyRotation(sphere_object.body, &rx, &ry, &rz, &rw);
+    
+    versor q;
+    glm_quat_identity(q);
+    glm_quat_init(q, rx, ry, rz, rw);
+    
+    mat4 rotation;
+    glm_quat_mat4(q, rotation);
+    
+    mat4 translation;
+    glm_translate_make(translation, (vec3){x, y, z});
+
+    mat4 model;
+    glm_mat4_mul(translation, rotation, model);
+
+    drawable_update_transform(&sphere_object, model);
+    drawable_draw(&sphere_object, shader, num_sphere_verts);
+}
+
+void throw_sphere()
+{
+    Bullet_SetPosition(sphere_object.body, get_camera_pos()[0], get_camera_pos()[1], get_camera_pos()[2]);
+    Bullet_SetLinearVelocity(sphere_object.body, 0.0f, 0.0f, 0.0f);
+    Bullet_SetAngularVelocity(sphere_object.body, 0.0f, 0.0f, 0.0f);
+        
+    Bullet_ApplyCentralImpulse(sphere_object.body, 
+    get_camera_front()[0] * 50.0f, 
+    get_camera_front()[1] * 50.0f, 
+    get_camera_front()[2] * 50.0f
+    );
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_F && action == GLFW_PRESS)
+    {
+        throw_sphere();
+    }
+}
+
 int main() 
 {
     srand(time(NULL));
@@ -168,6 +306,9 @@ int main()
     init_window();
     init_graphics();
     init_physics();
+
+    glfwSetWindowCenter(win);
+    glfwSetKeyCallback(win, key_callback);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -187,6 +328,7 @@ int main()
         glUseProgram(shader);
         update_ground();
         update_bodies();
+        update_sphere();
 
         glfwSwapBuffers(win);
         glfwPollEvents();

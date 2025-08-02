@@ -24,10 +24,8 @@ typedef struct BulletShape BulletShape;
 """
 
 def extract_function_decls(code: str):
-    # объединяем все строки, удаляя комментарии и лишние пробелы
     clean = re.sub(r'//.*?$|/\*.*?\*/', '', code, flags=re.DOTALL | re.MULTILINE)
     
-    # поддержка переноса строки после extern "C"
     extern_blocks = re.findall(r'extern\s+"C"\s*\{([\s\S]*?)^\}', clean, re.MULTILINE)
 
     decls = []
@@ -39,7 +37,6 @@ def extract_function_decls(code: str):
     for ret_type, name, args in funcs:
         ret_type = ' '.join(ret_type.strip().split())
     
-        # переносим * из имени в тип, если нужно
         name = name.strip()
         if name.startswith('*'):
             ret_type += '*'

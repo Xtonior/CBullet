@@ -23,6 +23,9 @@ void Bullet_StepSimulation(BulletWorld *w, float timeStep);
 void Bullet_GetBodyPosition(BulletBody *b, float *outX, float *outY, float *outZ);
 void Bullet_GetBodyEulerZYX(BulletBody *b, float *outX, float *outY, float *outZ);
 void Bullet_GetBodyRotation(BulletBody *b, float *outX, float *outY, float *outZ, float *outW);
+void Bullet_SetPosition(BulletBody *b, float x, float y, float z);
+void Bullet_SetLinearVelocity(BulletBody *b, float x, float y, float z);
+void Bullet_SetAngularVelocity(BulletBody *b, float x, float y, float z);
 
 // --- END ---
 

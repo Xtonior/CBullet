@@ -7,6 +7,7 @@
 #include "LinearMath/btQuaternion.h"
 #include "LinearMath/btTransform.h"
 #include "LinearMath/btVector3.h"
+#include "bullet_api.h"
 #include <btBulletDynamicsCommon.h>
 #include <cstdlib>
 
@@ -149,6 +150,26 @@ extern "C"
         *outX = rot.getX();
         *outY = rot.getY();
         *outZ = rot.getZ();
+    }
+
+    void Bullet_SetPosition(BulletBody *b, float x, float y, float z)
+    {
+        btTransform trans;
+        b->body->getMotionState()->getWorldTransform(trans);
+        trans.setOrigin(btVector3(x, y, z));
+
+        b->body->setWorldTransform(trans);
+        b->motionState->setWorldTransform(trans);
+    }
+
+    void Bullet_SetLinearVelocity(BulletBody *b, float x, float y, float z)
+    {
+        b->body->setLinearVelocity(btVector3(x, y, z));
+    }
+
+    void Bullet_SetAngularVelocity(BulletBody *b, float x, float y, float z)
+    {
+        b->body->setAngularVelocity(btVector3(x, y, z));
     }
 
     // Todo:
