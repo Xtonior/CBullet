@@ -4,17 +4,21 @@ LDFLAGS = -L../build -lbullet_wrapper -lBulletDynamics -lBulletCollision -lLinea
 
 BUILD_DIR = build
 OBJ_DIR = obj
+SRC_DIR = .
 
 TARGET = $(BUILD_DIR)/main
-OBJ = $(OBJ_DIR)/main.o
+SRC = $(wildcard $(SRC_DIR)/*.c)
+OBJ = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
 
-$(TARGET): $(OBJ)
-	@mkdir -p $(BUILD_DIR)
-	$(CC) -o $@ $^ $(LDFLAGS)
+$(TARGET): $(OBJ) | $(BUILD_DIR)
+	$(CC) $(OBJ) -o $@ $(LDFLAGS)
 
-$(OBJ): main.c ../cbinding/bullet_api.h
-	@mkdir -p $(OBJ_DIR)
-	$(CC) -c $< -o $@ $(CFLAGS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR):
+	@mkdir -p $@
 
 clean:
 	rm -rf $(BUILD_DIR) $(OBJ_DIR)

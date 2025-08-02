@@ -4,6 +4,7 @@
 #include "BulletDynamics/Dynamics/btRigidBody.h"
 #include "LinearMath/btDefaultMotionState.h"
 #include "LinearMath/btMotionState.h"
+#include "LinearMath/btQuaternion.h"
 #include "LinearMath/btTransform.h"
 #include "LinearMath/btVector3.h"
 #include <btBulletDynamicsCommon.h>
@@ -129,4 +130,32 @@ extern "C"
         *outY = origin.getY();
         *outZ = origin.getZ();
     }
+
+    void Bullet_GetBodyEulerZYX(BulletBody *b, float *outX, float *outY, float *outZ)
+    {
+        btTransform trans;
+        b->body->getMotionState()->getWorldTransform(trans);
+        btQuaternion rot = trans.getRotation();
+        rot.getEulerZYX(*outZ, *outY, *outX);
+    }
+
+    void Bullet_GetBodyRotation(BulletBody *b, float *outX, float *outY, float *outZ, float *outW)
+    {
+        btTransform trans;
+        b->body->getMotionState()->getWorldTransform(trans);
+        btQuaternion rot = trans.getRotation();
+        
+        *outW = rot.getW();
+        *outX = rot.getX();
+        *outY = rot.getY();
+        *outZ = rot.getZ();
+    }
+
+    // Todo:
+    // torque
+    // velocity
+    // active
+    // mass
+    // gravity
+    // forces related functions
 }

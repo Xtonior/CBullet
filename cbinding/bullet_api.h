@@ -21,6 +21,8 @@ void Bullet_DestroyShape(BulletShape *shape);
 void Bullet_ApplyCentralImpulse(BulletBody *b, float impulseX, float impulseY, float impulseZ);
 void Bullet_StepSimulation(BulletWorld *w, float timeStep);
 void Bullet_GetBodyPosition(BulletBody *b, float *outX, float *outY, float *outZ);
+void Bullet_GetBodyEulerZYX(BulletBody *b, float *outX, float *outY, float *outZ);
+void Bullet_GetBodyRotation(BulletBody *b, float *outX, float *outY, float *outZ, float *outW);
 
 // --- END ---
 
