@@ -1,3 +1,4 @@
+#include "bullet_types.h"
 #include <cglm/affine-mat.h>
 #include <cglm/euler.h>
 #include <cglm/quat.h>
@@ -154,7 +155,7 @@ int init_physics()
     world = Bullet_CreateWorld();
 
     drawable_init(&ground_object, shader, mesh_ground_vertices, num_ground_vertices * 3);
-    BulletShape* groundShape = Bullet_CreateBoxShape(20, 1, 20);
+    BulletShape* groundShape = Bullet_CreateBoxShape(20, 0.5f, 20);
     BulletBody* ground = Bullet_CreateRigidBody(world, groundShape, 0, 0, -1, 0);
 
     ground_object.body = ground;
@@ -196,24 +197,26 @@ void update_bodies()
     {
         if (glfwGetKey(win, GLFW_KEY_R) == GLFW_PRESS)
         {
-            Bullet_ApplyCentralImpulse(objects[i].body, 0.0f, 1.0f, 0.0f);
+            Bullet_Activate(objects[i].body, 0);
+            BulletVec3_t impulse = {0.0f, 1.0f, 0.0f};
+            Bullet_ApplyCentralImpulse(objects[i].body, impulse);
         }
 
-        float x, y, z;
-        Bullet_GetBodyPosition(objects[i].body, &x, &y, &z);
+        BulletVec3_t pos;
+        Bullet_GetBodyPosition(objects[i].body, &pos);
 
-        float rx, ry, rz, rw;
-        Bullet_GetBodyRotation(objects[i].body, &rx, &ry, &rz, &rw);
+        BulletQuat_t rot;
+        Bullet_GetBodyRotation(objects[i].body, &rot);
         
         versor q;
         glm_quat_identity(q);
-        glm_quat_init(q, rx, ry, rz, rw);
+        glm_quat_init(q, rot.x, rot.y, rot.z, rot.w);
         
         mat4 rotation;
         glm_quat_mat4(q, rotation);
         
         mat4 translation;
-        glm_translate_make(translation, (vec3){x, y, z});
+        glm_translate_make(translation, (vec3){pos.x, pos.y, pos.z});
 
         mat4 model;
         glm_mat4_mul(translation, rotation, model);
@@ -225,21 +228,21 @@ void update_bodies()
 
 void update_ground()
 {
-    float x, y, z;
-    Bullet_GetBodyPosition(ground_object.body, &x, &y, &z);
-    
-    float rx, ry, rz, rw;
-    Bullet_GetBodyRotation(ground_object.body, &rx, &ry, &rz, &rw);
+    BulletVec3_t pos;
+    Bullet_GetBodyPosition(ground_object.body, &pos);
+
+    BulletQuat_t rot;
+    Bullet_GetBodyRotation(ground_object.body, &rot);
     
     versor q;
     glm_quat_identity(q);
-    glm_quat_init(q, rx, ry, rz, rw);
+    glm_quat_init(q, rot.x, rot.y, rot.z, rot.w);
     
     mat4 rotation;
     glm_quat_mat4(q, rotation);
     
     mat4 translation;
-    glm_translate_make(translation, (vec3){x, y, z});
+    glm_translate_make(translation, (vec3){pos.x, pos.y + 0.5f, pos.z});
 
     mat4 model;
     glm_mat4_mul(translation, rotation, model);
@@ -250,26 +253,21 @@ void update_ground()
 
 void update_sphere()
 {
-    if (glfwGetKey(win, GLFW_KEY_F) == GLFW_PRESS)
-    {
-        
-    }
+    BulletVec3_t pos;
+    Bullet_GetBodyPosition(sphere_object.body, &pos);
 
-    float x, y, z;
-    Bullet_GetBodyPosition(sphere_object.body, &x, &y, &z);
-    
-    float rx, ry, rz, rw;
-    Bullet_GetBodyRotation(sphere_object.body, &rx, &ry, &rz, &rw);
+    BulletQuat_t rot;
+    Bullet_GetBodyRotation(sphere_object.body, &rot);
     
     versor q;
     glm_quat_identity(q);
-    glm_quat_init(q, rx, ry, rz, rw);
+    glm_quat_init(q, rot.x, rot.y, rot.z, rot.w);
     
     mat4 rotation;
     glm_quat_mat4(q, rotation);
     
     mat4 translation;
-    glm_translate_make(translation, (vec3){x, y, z});
+    glm_translate_make(translation, (vec3){pos.x, pos.y, pos.z});
 
     mat4 model;
     glm_mat4_mul(translation, rotation, model);
@@ -280,15 +278,22 @@ void update_sphere()
 
 void throw_sphere()
 {
+    Bullet_Activate(sphere_object.body, 0);
+
     Bullet_SetPosition(sphere_object.body, get_camera_pos()[0], get_camera_pos()[1], get_camera_pos()[2]);
-    Bullet_SetLinearVelocity(sphere_object.body, 0.0f, 0.0f, 0.0f);
-    Bullet_SetAngularVelocity(sphere_object.body, 0.0f, 0.0f, 0.0f);
+
+    BulletVec3_t zero_vec = {0.0f, 0.0f, 0.0f};
+    Bullet_SetLinearVelocity(sphere_object.body, &zero_vec);
+    Bullet_SetAngularVelocity(sphere_object.body, &zero_vec);
         
-    Bullet_ApplyCentralImpulse(sphere_object.body, 
-    get_camera_front()[0] * 50.0f, 
-    get_camera_front()[1] * 50.0f, 
-    get_camera_front()[2] * 50.0f
-    );
+    BulletVec3_t impulse = 
+    {
+        get_camera_front()[0] * 50.0f, 
+        get_camera_front()[1] * 50.0f, 
+        get_camera_front()[2] * 50.0f
+    };
+
+    Bullet_ApplyCentralImpulse(sphere_object.body, impulse);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

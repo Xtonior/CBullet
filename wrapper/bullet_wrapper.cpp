@@ -7,10 +7,11 @@
 #include "LinearMath/btQuaternion.h"
 #include "LinearMath/btTransform.h"
 #include "LinearMath/btVector3.h"
-#include "bullet_api.h"
 #include <btBulletDynamicsCommon.h>
 #include <cstdlib>
 
+#include "bullet_types.h"
+#include "bullet_api.h"
 #include "bullet_wrapper.h"
 
 extern "C"
@@ -35,6 +36,20 @@ extern "C"
         btDefaultMotionState* motionState;
         btRigidBody* body;
     };
+
+    // void BulletVec3_MakeFromBtVector3(BulletVec3_t *dest, btVector3 btv)
+    // {
+    //     dest->x = btv.x();
+    //     dest->y = btv.y();
+    //     dest->z = btv.z();
+    // }
+
+    // void BulletVec3_Make(BulletVec3_t *dest, float x, float y, float z)
+    // {
+    //     dest->x = x;
+    //     dest->y = y;
+    //     dest->z = z;
+    // }
 
     BulletWorld *Bullet_CreateWorld() 
     {
@@ -112,46 +127,238 @@ extern "C"
         delete shape;
     }
 
-    void Bullet_ApplyCentralImpulse(BulletBody *b, float impulseX, float impulseY, float impulseZ)
+    // Forces
+    void Bullet_ApplyCentralImpulse(BulletBody *b, BulletVec3_t v)
     {
-        b->body->applyCentralImpulse(btVector3(impulseX, impulseY, impulseZ));
+        b->body->applyCentralImpulse(btVector3(v.x, v.y, v.z));
     }
+
+    void Bullet_ApplyImpulse(BulletBody *b, BulletVec3_t v, BulletVec3_t p)
+    {
+        b->body->applyImpulse(btVector3(v.x, v.y, v.z), btVector3(p.x, p.y, p.z));
+    }
+
+    void Bullet_ApplyCentralPushImpulse(BulletBody *b, BulletVec3_t v, BulletVec3_t p)
+    {
+        b->body->applyCentralPushImpulse(btVector3(v.x, v.y, v.z));
+    }
+
+    void Bullet_ApplyPushImpulse(BulletBody *b, BulletVec3_t v, BulletVec3_t p)
+    {
+        b->body->applyPushImpulse(btVector3(v.x, v.y, v.z), btVector3(p.x, p.y, p.z));
+    }
+
+    void Bullet_ApplyCentralForce(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->applyCentralForce(btVector3(v.x, v.y, v.z));
+    }
+
+    void Bullet_ApplyForce(BulletBody *b, BulletVec3_t v, BulletVec3_t p)
+    {
+        b->body->applyForce(btVector3(v.x, v.y, v.z), btVector3(p.x, p.y, p.z));
+    }
+
+    void Bullet_ApplyTorque(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->applyTorque(btVector3(v.x, v.y, v.z));
+    }
+
+    void Bullet_ApplyTorqueImpulse(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->applyTorqueImpulse(btVector3(v.x, v.y, v.z));
+    }
+
+    void Bullet_ApplyTorqueTurnImpulse(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->applyTorqueTurnImpulse(btVector3(v.x, v.y, v.z));
+    }
+    // End Forces
 
     void Bullet_StepSimulation(BulletWorld *w, float timeStep) 
     {
         w->world->stepSimulation(timeStep);
     }
 
-    void Bullet_GetBodyPosition(BulletBody *b, float *outX, float *outY, float *outZ) 
+    void Bullet_Activate(BulletBody* b, int forceActivation)
+    {
+        b->body->activate(forceActivation);
+    }
+
+    // Getters
+    void Bullet_GetBodyPosition(BulletBody *b, BulletVec3_t *out) 
     {
         btTransform trans;
         b->body->getMotionState()->getWorldTransform(trans);
         btVector3 origin = trans.getOrigin();
-        *outX = origin.getX();
-        *outY = origin.getY();
-        *outZ = origin.getZ();
+        out->x = origin.getX();
+        out->y = origin.getY();
+        out->z = origin.getZ();
     }
 
-    void Bullet_GetBodyEulerZYX(BulletBody *b, float *outX, float *outY, float *outZ)
+    void Bullet_GetBodyEulerZYX(BulletBody *b, BulletVec3_t *out)
     {
         btTransform trans;
         b->body->getMotionState()->getWorldTransform(trans);
         btQuaternion rot = trans.getRotation();
-        rot.getEulerZYX(*outZ, *outY, *outX);
+        rot.getEulerZYX(out->z, out->y, out->x);
     }
 
-    void Bullet_GetBodyRotation(BulletBody *b, float *outX, float *outY, float *outZ, float *outW)
+    void Bullet_GetBodyRotation(BulletBody *b, BulletQuat_t *out)
     {
         btTransform trans;
         b->body->getMotionState()->getWorldTransform(trans);
         btQuaternion rot = trans.getRotation();
         
-        *outW = rot.getW();
-        *outX = rot.getX();
-        *outY = rot.getY();
-        *outZ = rot.getZ();
+        out->x = rot.getW();
+        out->y = rot.getX();
+        out->z = rot.getY();
+        out->w = rot.getZ();
     }
 
+    void Get_TotalTorque(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getTotalTorque();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    void Get_TotalForce(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getTotalForce();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    float Get_AngularDamping(BulletBody *b)
+    {
+        return b->body->getAngularDamping();
+    }
+
+    void Get_AngularFactor(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getAngularFactor();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    float Get_AngularSleepingThreshold(BulletBody *b)
+    {
+        return b->body->getAngularSleepingThreshold();
+    }
+
+    void Get_AngularVelocity(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getAngularVelocity();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    float Get_LinearDamping(BulletBody *b)
+    {
+        return b->body->getLinearDamping();
+    }
+
+    void Get_LinearFactor(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getLinearFactor();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    float Get_LinearSleepingThreshold(BulletBody *b)
+    {
+        return b->body->getLinearSleepingThreshold();
+    }
+
+    void Get_LinearVelocity(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getLinearVelocity();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    void Get_InterpolationLinearVelocity(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getInterpolationLinearVelocity();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    void Get_InterpolationAngularVelocity(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getInterpolationAngularVelocity();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    void Get_PushVelocity(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getPushVelocity();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    void Get_PushVelocityInLocalPoint(BulletBody *b, BulletVec3_t p, BulletVec3_t *out)
+    {
+        btVector3 pv = btVector3(p.x, p.y, p.z);
+        btVector3 v = b->body->getPushVelocityInLocalPoint(pv);
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    void Get_TurnVelocity(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getTurnVelocity();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    float Get_DeactivationTime(BulletBody *b)
+    {
+        return b->body->getDeactivationTime();
+    }
+
+    float Get_Restitution(BulletBody *b)
+    {
+        return b->body->getRestitution();
+    }
+
+    float Get_Friction(BulletBody *b)
+    {
+        return b->body->getFriction();
+    }
+
+    void Get_AnisotropicFriction(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getAnisotropicFriction();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+
+    float Get_RollingFriction(BulletBody *b)
+    {
+        return b->body->getRollingFriction();
+    }
+
+    float Get_SpinningFriction(BulletBody *b)
+    {
+        return b->body->getSpinningFriction();
+    }
+
+    float Get_Mass(BulletBody *b)
+    {
+        return b->body->getMass();
+    }
+
+    void Get_LocalInertia(BulletBody *b, BulletVec3_t *out)
+    {
+        btVector3 v = b->body->getLocalInertia();
+        BulletVec3_t o { v.x(), v.y(), v.z() };
+        *out = o;
+    }
+    // End Getters
+
+    // Setters
     void Bullet_SetPosition(BulletBody *b, float x, float y, float z)
     {
         btTransform trans;
@@ -162,21 +369,111 @@ extern "C"
         b->motionState->setWorldTransform(trans);
     }
 
-    void Bullet_SetLinearVelocity(BulletBody *b, float x, float y, float z)
+    void Bullet_SetRotation(BulletBody *b, const BulletQuat_t *rot)
     {
-        b->body->setLinearVelocity(btVector3(x, y, z));
+        btTransform trans;
+        b->body->getMotionState()->getWorldTransform(trans);
+        trans.setRotation(btQuaternion(rot->x, rot->y, rot->z, rot->w));
+
+        b->body->setWorldTransform(trans);
+        b->motionState->setWorldTransform(trans);
     }
 
-    void Bullet_SetAngularVelocity(BulletBody *b, float x, float y, float z)
+    void Bullet_SetLinearVelocity(BulletBody *b, const BulletVec3_t *v)
     {
-        b->body->setAngularVelocity(btVector3(x, y, z));
+        b->body->setLinearVelocity(btVector3(v->x, v->y, v->z));
     }
+
+    void Bullet_SetAngularVelocity(BulletBody *b, const BulletVec3_t *v)
+    {
+        b->body->setAngularVelocity(btVector3(v->x, v->y, v->z));
+    }
+
+    void Set_AngularFactor(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularFactor(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_AngularVelocity(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_LinearFactor(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_LinearVelocity(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_PushVelocity(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_TurnVelocity(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_Damping(BulletBody *b, float lin_damping, float ang_damping)
+    {
+        b->body->setDamping(lin_damping, ang_damping);
+    }
+
+    void Set_Gravity(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_SleepingThresholds(BulletBody *b, float linear, float angular)
+    {
+        b->body->setSleepingThresholds(linear, angular);
+    }
+
+    void Set_InterpolationAngularVelocity(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_InterpolationLinearVelocity(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_Friction(BulletBody *b, float frict)
+    {
+        b->body->setFriction(frict);
+    }
+
+    void Set_AnisotropicFriction(BulletBody *b, BulletVec3_t v)
+    {
+        b->body->setAngularVelocity(btVector3(v.x, v.y, v.z));
+    }
+
+    void Set_RollingFriction(BulletBody *b, float frict)
+    {
+        b->body->setRollingFriction(frict);
+    }
+
+    void Set_SpinningFriction(BulletBody *b, float frict)
+    {
+        b->body->setSpinningFriction(frict);
+    }
+
+    void Set_DeactivationTime(BulletBody *b, float time)
+    {
+        b->body->setDeactivationTime(time);
+    }
+    // End Setters
 
     // Todo:
-    // torque
-    // velocity
-    // active
-    // mass
-    // gravity
-    // forces related functions
+    // rewrite forces for BulletVec3_t
+    // mat4, quat, vector conversation (glm -> bulet)
+    // contacts
+    // raycast
+    // friction
 }

@@ -49,13 +49,13 @@ const int num_cube_vertices = 36;
 
 float mesh_ground_vertices[] = {
     //        x      y     z
-    -20.0f, 1.0f, -20.0f,
-     20.0f, 1.0f, -20.0f,
-     20.0f, 1.0f,  20.0f,
+    -20.0f, 0.0f, -20.0f,
+     20.0f, 0.0f, -20.0f,
+     20.0f, 0.0f,  20.0f,
 
-     20.0f, 1.0f,  20.0f,
-    -20.0f, 1.0f,  20.0f,
-    -20.0f, 1.0f, -20.0f
+     20.0f, 0.0f,  20.0f,
+    -20.0f, 0.0f,  20.0f,
+    -20.0f, 0.0f, -20.0f
 };
 
 const int num_ground_vertices = 6;
