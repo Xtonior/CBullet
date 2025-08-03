@@ -1,4 +1,3 @@
-#include "bullet_types.h"
 #include <cglm/affine-mat.h>
 #include <cglm/euler.h>
 #include <cglm/quat.h>
@@ -6,8 +5,6 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
-#include "bullet_api.h"
 
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
@@ -17,6 +14,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+
+#include "bullet_api.h"
+#include "bullet_types.h"
 
 #include "camera.h"
 #include "shaders.h"

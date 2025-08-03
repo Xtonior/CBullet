@@ -38,6 +38,7 @@ To use the wrapper in your C project:
 
 ```c
 #include "bullet_api.h"
+#include "bullet_types.h"
 ```
 
 ### Link with:
