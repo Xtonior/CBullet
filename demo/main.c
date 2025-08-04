@@ -23,6 +23,7 @@
 #include "drawable.h"
 #include "meshes.h"
 #include "meshgen.h"
+#include "m_player.h"
 
 #define MAX_BODIES 128
 
@@ -155,8 +156,8 @@ int init_physics()
     world = Bullet_CreateWorld();
 
     drawable_init(&ground_object, shader, mesh_ground_vertices, num_ground_vertices * 3);
-    BulletShape* groundShape = Bullet_CreateBoxShape(20, 0.5f, 20);
-    BulletBody* ground = Bullet_CreateRigidBody(world, groundShape, 0, 0, -1, 0);
+    BulletShape *groundShape = Bullet_CreateBoxShape(20, 0.5f, 20);
+    BulletBody *ground = Bullet_CreateRigidBody(world, groundShape, 0, 0, -1, 0);
 
     ground_object.body = ground;
     for (int j = 0; j < 3; ++j)
@@ -165,8 +166,8 @@ int init_physics()
     float *sphere_verts = mesh_gen_sphere(16, 16, 0.5f, &num_sphere_verts);
 
     drawable_init(&sphere_object, shader, sphere_verts, num_sphere_verts * 3);
-    BulletShape* sphereShape = Bullet_CreateSphereShape(0.5f);
-    BulletBody* sphere = Bullet_CreateRigidBody(world, sphereShape, 1, 0, 10, 0);
+    BulletShape *sphereShape = Bullet_CreateSphereShape(0.5f);
+    BulletBody *sphere = Bullet_CreateRigidBody(world, sphereShape, 1, 0, 10, 0);
 
     sphere_object.body = sphere;
     for (int j = 0; j < 3; ++j)
@@ -175,8 +176,8 @@ int init_physics()
     for (int i = 0; i < 120; ++i) 
     {
         drawable_init(&objects[i], shader, mesh_cube_vertices, num_cube_vertices * 3);
-        BulletShape* shape = Bullet_CreateBoxShape(0.5f, 0.5f, 0.5f);
-        BulletBody* body = Bullet_CreateRigidBody(world, shape, 1.0f,
+        BulletShape *shape = Bullet_CreateBoxShape(0.5f, 0.5f, 0.5f);
+        BulletBody *body = Bullet_CreateRigidBody(world, shape, 1.0f,
             rand()%10 - 5, i*2 + 2, rand()%10 - 5);
 
         objects[i].body = body;
@@ -187,6 +188,10 @@ int init_physics()
     }
 
     objects[objectCount++] = sphere_object;
+
+    BulletShape *capsule = Bullet_CreateCapsuleShape(1.0f, 2.0f);
+    BulletBody *player_body = Bullet_CreateRigidBody(world, capsule, 65.0f, 0.0f, 5.0f, 0.0f);
+    player_init((vec3){0.0f, 5.0f, 0.0f}, player_body);
 
     return 1;
 }
@@ -276,6 +281,11 @@ void update_sphere()
     drawable_draw(&sphere_object, shader, num_sphere_verts);
 }
 
+void update_player(float dt)
+{
+    player_update(win, dt);
+}
+
 void throw_sphere()
 {
     Bullet_Activate(sphere_object.body, 0);
@@ -334,6 +344,7 @@ int main()
         update_ground();
         update_bodies();
         update_sphere();
+        update_player(dt);
 
         glfwSwapBuffers(win);
         glfwPollEvents();

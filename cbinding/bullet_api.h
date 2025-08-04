@@ -20,6 +20,7 @@ BulletBody* Bullet_CreateRigidBody(BulletWorld *w, BulletShape *shape, float mas
 void Bullet_DestroyRigidBody(BulletWorld *w, BulletBody *b);
 BulletShape* Bullet_CreateSphereShape(float radius);
 BulletShape* Bullet_CreateBoxShape(float halfExtentX, float halfExtentY, float halfExtentZ);
+BulletShape *Bullet_CreateCapsuleShape(float radius, float height);
 void Bullet_DestroyShape(BulletShape *shape);
 void Bullet_ApplyCentralImpulse(BulletBody *b, BulletVec3_t v);
 void Bullet_ApplyImpulse(BulletBody *b, BulletVec3_t v, BulletVec3_t p);

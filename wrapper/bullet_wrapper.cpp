@@ -1,5 +1,6 @@
 // bullet_wrapper.cpp
 #include "BulletCollision/CollisionShapes/btBoxShape.h"
+#include "BulletCollision/CollisionShapes/btCapsuleShape.h"
 #include "BulletCollision/CollisionShapes/btSphereShape.h"
 #include "BulletDynamics/Dynamics/btRigidBody.h"
 #include "LinearMath/btDefaultMotionState.h"
@@ -119,6 +120,13 @@ extern "C"
     {
         BulletShape* b = new BulletShape;
         b->collisionShape = new btBoxShape(btVector3(halfExtentX, halfExtentY, halfExtentZ));
+        return b;
+    }
+
+    BulletShape *Bullet_CreateCapsuleShape(float radius, float height)
+    {
+        BulletShape *b = new BulletShape();
+        b->collisionShape = new btCapsuleShape(radius, height);
         return b;
     }
 

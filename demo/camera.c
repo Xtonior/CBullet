@@ -1,6 +1,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
+#include <cglm/vec3.h>
+
+#include "camera.h"
 
 float camYaw = -90.0f, camPitch = 0.0f;
 vec3 camPos = {0.0f, 5.0f, 20.0f};
@@ -15,9 +18,19 @@ float *get_camera_front()
     return camFront;
 }
 
+float *get_camera_up()
+{
+    return camUp;
+}
+
 float *get_camera_pos()
 {
     return camPos;
+}
+
+void set_camera_position(vec3 pos)
+{
+    glm_vec3_dup(pos, camPos);
 }
 
 void camera_update_mouse(float xpos, float ypos)
@@ -47,29 +60,29 @@ void camera_update_mouse(float xpos, float ypos)
 
 void camera_update_movement(GLFWwindow* win, float delta)
 {
-    float speed = 10.0f * delta;
-    vec3 tmp;
+    // float speed = 10.0f * delta;
+    // vec3 tmp;
 
-    if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS) {
-        glm_vec3_scale(camFront, speed, tmp);
-        glm_vec3_add(camPos, tmp, camPos);
-    }
-    if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS) {
-        glm_vec3_scale(camFront, speed, tmp);
-        glm_vec3_sub(camPos, tmp, camPos);
-    }
-    vec3 right;
-    glm_vec3_cross(camFront, camUp, right);
-    glm_vec3_normalize(right);
+    // if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS) {
+    //     glm_vec3_scale(camFront, speed, tmp);
+    //     glm_vec3_add(camPos, tmp, camPos);
+    // }
+    // if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS) {
+    //     glm_vec3_scale(camFront, speed, tmp);
+    //     glm_vec3_sub(camPos, tmp, camPos);
+    // }
+    // vec3 right;
+    // glm_vec3_cross(camFront, camUp, right);
+    // glm_vec3_normalize(right);
 
-    if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS) {
-        glm_vec3_scale(right, speed, tmp);
-        glm_vec3_sub(camPos, tmp, camPos);
-    }
-    if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS) {
-        glm_vec3_scale(right, speed, tmp);
-        glm_vec3_add(camPos, tmp, camPos);
-    }
+    // if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS) {
+    //     glm_vec3_scale(right, speed, tmp);
+    //     glm_vec3_sub(camPos, tmp, camPos);
+    // }
+    // if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS) {
+    //     glm_vec3_scale(right, speed, tmp);
+    //     glm_vec3_add(camPos, tmp, camPos);
+    // }
 }
 
 void camera_draw(GLuint shader)
