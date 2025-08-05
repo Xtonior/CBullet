@@ -9,6 +9,13 @@
 #include "camera.h"
 #include "m_player.h"
 
+#ifdef _WIN32
+#include <conio.h>
+#else
+#include <stdio.h>
+#define clrscr() printf("\e[1;1H\e[2J")
+#endif
+
 BulletBody *body;
 vec3 player_pos;
 vec3 player_vel;
@@ -27,8 +34,45 @@ void player_init(vec3 pos, BulletBody *b)
     body = b;
 }
 
-void player_update(GLFWwindow* win, float dt)
+int GetContacts(BulletWorld *w, BulletContactPoint_t *contacts[16])
 {
+    BulletContactResultCallback *cb = NULL;
+
+    Bullet_WorldContactTest(w, body, &cb);
+    int c = Bullet_BodyGetCountContacts(cb, 16);
+    
+    for (int i = 0; i < c; i++)
+    {
+        Bullet_GetContactPoint(cb, contacts[i], i);
+    }
+
+    Bullet_DestroyContactResultCallback(cb);
+
+    return c;
+}
+
+void player_update(GLFWwindow* win, BulletWorld *w, float dt)
+{
+    BulletContactPoint_t *p_contacts[16];
+    int c;
+
+    for (int i = 0; i < 16; i++)
+    {
+        p_contacts[i] = malloc(sizeof(BulletContactPoint_t));
+    }
+
+    c = GetContacts(w, p_contacts);
+
+    for (int i = 0; i < c; i++)
+    {
+        printf("contact %d normal: %f, %f, %f\n", 
+            i,
+            p_contacts[i]->normalOnB.x,
+            p_contacts[i]->normalOnB.y,
+            p_contacts[i]->normalOnB.z);
+    }
+    clrscr();
+
     vec3 input_x, input_y, target_vel, input;
     vec3 tmp;
 

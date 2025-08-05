@@ -1,4 +1,5 @@
 // bullet_wrapper.cpp
+#include "BulletCollision/CollisionDispatch/btCollisionWorld.h"
 #include "BulletCollision/CollisionShapes/btBoxShape.h"
 #include "BulletCollision/CollisionShapes/btCapsuleShape.h"
 #include "BulletCollision/CollisionShapes/btSphereShape.h"
@@ -10,20 +11,36 @@
 #include "LinearMath/btVector3.h"
 #include <btBulletDynamicsCommon.h>
 #include <cstdlib>
+#include <vector>
 
 #include "bullet_types.h"
 #include "bullet_api.h"
 #include "bullet_wrapper.h"
 
+struct _ContactResultCallback : public btCollisionWorld::ContactResultCallback 
+{
+    std::vector<btManifoldPoint> contacts;
+    btScalar addSingleResult(btManifoldPoint& cp,
+                         const btCollisionObjectWrapper* colObj0Wrap,
+                         int partId0, int index0,
+                         const btCollisionObjectWrapper* colObj1Wrap,
+                         int partId1, int index1) override
+    {
+        if (cp.getDistance() < 0.0f)
+            contacts.push_back(cp);
+        return 0.f;
+    }
+};
+
 extern "C"
 {
     struct BulletWorld 
     {
-        btDefaultCollisionConfiguration* collisionConfig;
-        btCollisionDispatcher* dispatcher;
-        btBroadphaseInterface* broadphase;
-        btSequentialImpulseConstraintSolver* solver;
-        btDiscreteDynamicsWorld* world;
+        btDefaultCollisionConfiguration *collisionConfig;
+        btCollisionDispatcher *dispatcher;
+        btBroadphaseInterface *broadphase;
+        btSequentialImpulseConstraintSolver *solver;
+        btDiscreteDynamicsWorld *world;
     };
 
     struct BulletShape
@@ -33,24 +50,15 @@ extern "C"
 
     struct BulletBody 
     {
-        BulletShape* shape;
-        btDefaultMotionState* motionState;
-        btRigidBody* body;
+        BulletShape *shape;
+        btDefaultMotionState *motionState;
+        btRigidBody *body;
     };
 
-    // void BulletVec3_MakeFromBtVector3(BulletVec3_t *dest, btVector3 btv)
-    // {
-    //     dest->x = btv.x();
-    //     dest->y = btv.y();
-    //     dest->z = btv.z();
-    // }
-
-    // void BulletVec3_Make(BulletVec3_t *dest, float x, float y, float z)
-    // {
-    //     dest->x = x;
-    //     dest->y = y;
-    //     dest->z = z;
-    // }
+    struct BulletContactResultCallback
+    {
+        _ContactResultCallback *contactResultCallback;
+    };
 
     BulletWorld *Bullet_CreateWorld() 
     {
@@ -77,6 +85,36 @@ extern "C"
         delete w->dispatcher;
         delete w->collisionConfig;
         delete w;
+    }
+
+    // Contacts handling
+    void Bullet_WorldContactTest(BulletWorld* w, BulletBody *b, BulletContactResultCallback **outContactResultCallback)
+    {
+        BulletContactResultCallback *result = new BulletContactResultCallback;
+        result->contactResultCallback = new _ContactResultCallback();
+        w->world->contactTest(b->body, *result->contactResultCallback);
+        *outContactResultCallback = result;
+    }
+
+    void Bullet_GetContactPoint(BulletContactResultCallback *contactResultCallback, BulletContactPoint_t *outBulletContactPoint, int numContact)
+    {
+        const btManifoldPoint& cp = contactResultCallback->contactResultCallback->contacts[numContact];
+        outBulletContactPoint->pointOnA = {cp.getPositionWorldOnA().getX(), cp.getPositionWorldOnA().getY(), cp.getPositionWorldOnA().getZ()};
+        outBulletContactPoint->pointOnB = {cp.getPositionWorldOnB().getX(), cp.getPositionWorldOnB().getY(), cp.getPositionWorldOnB().getZ()};
+        outBulletContactPoint->normalOnB = {cp.m_normalWorldOnB.getX(), cp.m_normalWorldOnB.getY(), cp.m_normalWorldOnB.getZ()};
+        outBulletContactPoint->impulse = cp.getAppliedImpulse();
+    }
+
+    int Bullet_BodyGetCountContacts(BulletContactResultCallback *contactResultCallback, int maxPoints)
+    {
+        int count = std::min<int>(contactResultCallback->contactResultCallback->contacts.size(), maxPoints);
+        return count;
+    }
+    
+    void Bullet_DestroyContactResultCallback(BulletContactResultCallback* callback)
+    {
+        delete callback->contactResultCallback;
+        delete callback;
     }
 
     BulletBody *Bullet_CreateRigidBody(BulletWorld *w, BulletShape *shape, float mass, float x, float y, float z) 

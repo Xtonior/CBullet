@@ -7,4 +7,4 @@
 
 float player_vec3_len(vec3 *v);
 void player_init(vec3 pos, BulletBody *b);
-void player_update(GLFWwindow* win, float dt);
+void player_update(GLFWwindow* win, BulletWorld *w, float dt);

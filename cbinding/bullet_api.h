@@ -8,6 +8,7 @@ extern "C" {
 
 // Structs
 typedef struct BulletBody BulletBody;
+typedef struct BulletContactResultCallback BulletContactResultCallback;
 typedef struct BulletShape BulletShape;
 typedef struct BulletWorld BulletWorld;
 
@@ -16,11 +17,15 @@ typedef struct BulletWorld BulletWorld;
 BulletWorld* Bullet_CreateWorld();
 void Bullet_SetGravity(BulletWorld *world, float x, float y, float z);
 void Bullet_DestroyWorld(BulletWorld* w);
+void Bullet_WorldContactTest(BulletWorld* w, BulletBody *b, BulletContactResultCallback **outContactResultCallback);
+void Bullet_GetContactPoint(BulletContactResultCallback *contactResultCallback, BulletContactPoint_t *outBulletContactPoint, int numContact);
+int Bullet_BodyGetCountContacts(BulletContactResultCallback *contactResultCallback, int maxPoints);
+void Bullet_DestroyContactResultCallback(BulletContactResultCallback* callback);
 BulletBody* Bullet_CreateRigidBody(BulletWorld *w, BulletShape *shape, float mass, float x, float y, float z);
 void Bullet_DestroyRigidBody(BulletWorld *w, BulletBody *b);
 BulletShape* Bullet_CreateSphereShape(float radius);
 BulletShape* Bullet_CreateBoxShape(float halfExtentX, float halfExtentY, float halfExtentZ);
-BulletShape *Bullet_CreateCapsuleShape(float radius, float height);
+BulletShape* Bullet_CreateCapsuleShape(float radius, float height);
 void Bullet_DestroyShape(BulletShape *shape);
 void Bullet_ApplyCentralImpulse(BulletBody *b, BulletVec3_t v);
 void Bullet_ApplyImpulse(BulletBody *b, BulletVec3_t v, BulletVec3_t p);

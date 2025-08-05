@@ -283,7 +283,7 @@ void update_sphere()
 
 void update_player(float dt)
 {
-    player_update(win, dt);
+    player_update(win, world, dt);
 }
 
 void throw_sphere()
