@@ -142,8 +142,8 @@ extern "C"
     void Bullet_DestroyRigidBody(BulletWorld *w, BulletBody *b) 
     {
         w->world->removeRigidBody(b->body);
-        delete b->body;
-        delete b->motionState;
+        if (b->body) delete b->body;
+        if (b->motionState) delete b->motionState;
         delete b;
     }
 
@@ -170,6 +170,12 @@ extern "C"
 
     void Bullet_DestroyShape(BulletShape *shape)
     {
+        if (shape->collisionShape) 
+        {
+            delete shape->collisionShape;
+            shape->collisionShape = nullptr;
+        }
+
         delete shape;
     }
 

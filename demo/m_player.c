@@ -21,8 +21,8 @@ vec3 player_pos;
 vec3 player_vel;
 BulletVec3_t bt_player_vel;
 BulletVec3_t bt_player_pos;
-float accel = 50.0f;
-float max_speed = 10.0f;
+float accel = 30.0f;
+float max_speed = 20.0f;
 
 float player_vec3_len(vec3 *v)
 {
@@ -55,6 +55,7 @@ void player_update(GLFWwindow* win, BulletWorld *w, float dt)
 {
     BulletContactPoint_t *p_contacts[16];
     int c;
+    int is_grounded = 0;
 
     for (int i = 0; i < 16; i++)
     {
@@ -65,6 +66,13 @@ void player_update(GLFWwindow* win, BulletWorld *w, float dt)
 
     for (int i = 0; i < c; i++)
     {
+        vec3 norm = {p_contacts[i]->normalOnB.x, p_contacts[i]->normalOnB.y, p_contacts[i]->normalOnB.z};
+        glm_vec3_normalize(norm);
+        float dot = glm_vec3_dot(norm, (vec3){0.0f, 1.0f, 0.0f});
+
+        if (fabs(dot) > 0.8f)
+            is_grounded = 1;
+
         printf("contact %d normal: %f, %f, %f\n", 
             i,
             p_contacts[i]->normalOnB.x,
@@ -138,6 +146,11 @@ void player_update(GLFWwindow* win, BulletWorld *w, float dt)
     Get_LinearVelocity(body, &bt_player_vel);
     bt_player_vel.x = player_vel[0];
     bt_player_vel.z = player_vel[2];
+
+    if (glfwGetKey(win, GLFW_KEY_SPACE) == GLFW_PRESS && is_grounded == 1)
+    {
+        bt_player_vel.y = 650.0f * dt;
+    }
 
     Bullet_Activate(body, 1);
     Bullet_SetLinearVelocity(body, &bt_player_vel);
