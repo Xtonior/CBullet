@@ -87,6 +87,36 @@ extern "C"
         delete w;
     }
 
+    void Bullet_ShapeSetMargin(BulletShape *shape, float margin)
+    {
+        shape->collisionShape->setMargin(margin);
+    }
+
+    void Bullet_ShapeGetMargin(BulletShape *shape, float *out_margin)
+    {
+        *out_margin = shape->collisionShape->getMargin();
+    }
+
+    void Bullet_BodySetCcdMotionThreshold(BulletBody *b, float threshold)
+    {
+        b->body->setCcdMotionThreshold(threshold);
+    }
+
+    void Bullet_SetCcdSweptSphereRadius(BulletBody *b, float radius)
+    {
+        b->body->setCcdSweptSphereRadius(radius);
+    }
+
+    void Bullet_BodyGetCcdMotionThreshold(BulletBody *b, float *out_threshold)
+    {
+        *out_threshold = b->body->getCcdMotionThreshold();
+    }
+
+    void Bullet_GetCcdSweptSphereRadius(BulletBody *b, float *out_redius)
+    {
+        *out_redius = b->body->getCcdSweptSphereRadius();
+    }
+
     // Contacts handling
     void Bullet_WorldContactTest(BulletWorld* w, BulletBody *b, BulletContactResultCallback **outContactResultCallback)
     {
@@ -109,6 +139,11 @@ extern "C"
     {
         int count = std::min<int>(contactResultCallback->contactResultCallback->contacts.size(), maxPoints);
         return count;
+    }
+
+    void Bullet_ClearContactResultCallback(BulletContactResultCallback* callback)
+    {
+        callback->contactResultCallback->contacts.clear();
     }
     
     void Bullet_DestroyContactResultCallback(BulletContactResultCallback* callback)
